@@ -11,6 +11,7 @@ def build_flight_plan(dir_idx, size):
             flight_plan += str(size)
     return flight_plan
 
+
 def agent(obs, config):
     board = Board(obs, config)
     me = board.current_player
@@ -23,7 +24,9 @@ def agent(obs, config):
         if kore_left >= 500 and shipyard.ship_count >= convert_cost:
             flight_plan = build_flight_plan(randint(0, 3), randint(10, 15))
             flight_plan = flight_plan[:6] + "C"
-            action = ShipyardAction.launch_fleet_with_flight_plan(convert_cost, flight_plan)
+            action = ShipyardAction.launch_fleet_with_flight_plan(
+                convert_cost, flight_plan
+            )
         elif shipyard.ship_count >= 21:
             flight_plan = build_flight_plan(randint(0, 3), randint(2, 9))
             action = ShipyardAction.launch_fleet_with_flight_plan(21, flight_plan)

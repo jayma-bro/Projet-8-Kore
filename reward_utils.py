@@ -1,5 +1,15 @@
 # %%writefile reward_utils.py
-from config import GAME_CONFIG, SHIP_COST, SHIPYARD_COST, OPTIMAL_SHIP_COUNT, WEIGHT_SHIP, WEIGHT_KORE, WEIGHT_CARGO, WEIGHT_SHIPYARD, WEIGHT_SHIPS_IN_SHIPYARD
+from config import (
+    GAME_CONFIG,
+    SHIP_COST,
+    SHIPYARD_COST,
+    OPTIMAL_SHIP_COUNT,
+    WEIGHT_SHIP,
+    WEIGHT_KORE,
+    WEIGHT_CARGO,
+    WEIGHT_SHIPYARD,
+    WEIGHT_SHIPS_IN_SHIPYARD,
+)
 from kaggle_environments.envs.kore_fleets.helpers import Board
 from typing import Union, Tuple, Optional, Dict
 import numpy as np
@@ -12,10 +22,11 @@ import math
 # _weights_kore = np.linspace(start=0, stop=1, num=_end_of_asset_value)
 # WEIGHTS_ASSETS = np.append(_weights_assets, np.zeros(_max_steps - _end_of_asset_value))
 # WEIGHTS_KORE = np.append(_weights_kore, np.ones(_max_steps - _end_of_asset_value))
-WEIGHTS_MAX_SPAWN = {x: (x+3)/4 for x in range(1, 11)}  # Value multiplier of a shipyard as a function of its max spawn
+WEIGHTS_MAX_SPAWN = {
+    x: (x + 3) / 4 for x in range(1, 11)
+}  # Value multiplier of a shipyard as a function of its max spawn
 # WEIGHTS_KORE_IN_FLEETS = WEIGHTS_KORE * WEIGHTS_ASSETS/2  # Always equal or smaller than either, almost always smaller
-WEIGHTS_KORE_steps = np.linspace(start=0, stop=1, num=GAME_CONFIG['episodeSteps'])
-
+WEIGHTS_KORE_steps = np.linspace(start=0, stop=1, num=GAME_CONFIG["episodeSteps"])
 
 
 def get_board_value(board: Board) -> float:
@@ -60,31 +71,62 @@ def get_board_value(board: Board) -> float:
     player = board.current_player
     player_fleets, player_shipyards = list(player.fleets), list(player.shipyards)
 
-    value_kore =  math.log(player.kore + 1) * WEIGHT_KORE * WEIGHTS_KORE_steps[step]
+    value_kore = math.log(player.kore + 1) * WEIGHT_KORE * WEIGHTS_KORE_steps[step]
 
     # value_fleets = weight_assets * SHIP_COST * (
     #         sum(fleet.ship_count for fleet in player_fleets)
     #         + sum(shipyard.ship_count for shipyard in player_shipyards)
     # )
-    num_ships = sum(fleet.ship_count for fleet in player_fleets) + sum(shipyard.ship_count for shipyard in player_shipyards)
+    num_ships = sum(fleet.ship_count for fleet in player_fleets) + sum(
+        shipyard.ship_count for shipyard in player_shipyards
+    )
 
-    if num_ships<=OPTIMAL_SHIP_COUNT:
-        value_fleets = clip_normalize(num_ships, low_in=0, high_in=OPTIMAL_SHIP_COUNT, low_out=0, high_out=1) * WEIGHT_SHIP
+    if num_ships <= OPTIMAL_SHIP_COUNT:
+        value_fleets = (
+            clip_normalize(
+                num_ships, low_in=0, high_in=OPTIMAL_SHIP_COUNT, low_out=0, high_out=1
+            )
+            * WEIGHT_SHIP
+        )
     else:
-        value_fleets = (1-clip_normalize(num_ships, low_in=OPTIMAL_SHIP_COUNT, high_in=OPTIMAL_SHIP_COUNT*2, low_out=0, high_out=1)) * WEIGHT_SHIP
-    
-    value_shipyards = WEIGHT_SHIPYARD * (sum(WEIGHTS_MAX_SPAWN[shipyard.max_spawn] for shipyard in player_shipyards))
+        value_fleets = (
+            1
+            - clip_normalize(
+                num_ships,
+                low_in=OPTIMAL_SHIP_COUNT,
+                high_in=OPTIMAL_SHIP_COUNT * 2,
+                low_out=0,
+                high_out=1,
+            )
+        ) * WEIGHT_SHIP
+
+    value_shipyards = WEIGHT_SHIPYARD * (
+        sum(WEIGHTS_MAX_SPAWN[shipyard.max_spawn] for shipyard in player_shipyards)
+    )
     # value_shipyards = weight_assets * SHIPYARD_COST * (
     #     sum(shipyard.max_spawn * WEIGHTS_MAX_SPAWN[shipyard.max_spawn] for shipyard in player_shipyards)
     # )
     value_kore_in_cargo = sum(fleet.kore for fleet in player_fleets) * WEIGHT_CARGO
     # value_kore_in_cargo = weight_cargo * sum(fleet.kore for fleet in player_fleets)
-    ships_in_shipyard = 0 - sum(clip_normalize(shipyard.ship_count, low_in=0, high_in=300, low_out=0, high_out=WEIGHT_SHIPS_IN_SHIPYARD) for shipyard in player_shipyards)
+    ships_in_shipyard = 0 - sum(
+        clip_normalize(
+            shipyard.ship_count,
+            low_in=0,
+            high_in=300,
+            low_out=0,
+            high_out=WEIGHT_SHIPS_IN_SHIPYARD,
+        )
+        for shipyard in player_shipyards
+    )
 
     # Add (or subtract) the partial values to the total board value. The current player is always us.
-    board_value += value_kore + value_fleets + value_shipyards + value_kore_in_cargo + ships_in_shipyard
-
-    
+    board_value += (
+        value_kore
+        + value_fleets
+        + value_shipyards
+        + value_kore_in_cargo
+        + ships_in_shipyard
+    )
 
     #    Debugging info
     # with open('logs/tmp.log', 'a') as log:
@@ -95,15 +137,16 @@ def get_board_value(board: Board) -> float:
     #     print("value_shipyards {:.2f}".format(value_shipyards), file=log)
     #     print("value_kore_in_cargo {:.2f}".format(value_kore_in_cargo), file=log)
 
+    return board_value  # c'est un flotant
 
-    return board_value # c'est un flotant
 
-
-def clip_normalize(x: Union[np.ndarray, float],
-                   low_in: float,
-                   high_in: float,
-                   low_out=-1.,
-                   high_out=1.) -> Union[np.ndarray, float]:
+def clip_normalize(
+    x: Union[np.ndarray, float],
+    low_in: float,
+    high_in: float,
+    low_out=-1.0,
+    high_out=1.0,
+) -> Union[np.ndarray, float]:
     """Clip values in x to the interval [low_in, high_in] and then MinMax-normalize to [low_out, high_out].
 
     Args:

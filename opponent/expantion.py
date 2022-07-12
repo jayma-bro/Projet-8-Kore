@@ -200,4 +200,4 @@ def is_safety_route_to_convert(route_points: List[Point], player: Player):
                 if point in pl.expected_dmg_positions[time]:
                     return False
 
-    return True         
+    return True

@@ -41,7 +41,9 @@ def direct_attack(agent: Player, max_distance: int = 10):
                 closest_shipyard = sy
         point_to_closest_shipyard[p] = closest_shipyard.point
 
-    opponent_shipyard_points = {x.point for x in board.shipyards if x.player_id != agent.game_id}
+    opponent_shipyard_points = {
+        x.point for x in board.shipyards if x.player_id != agent.game_id
+    }
     for t in targets:
         min_ships_to_send = int(t.ship_count * 1.2)
         attacked = False
@@ -75,7 +77,9 @@ def direct_attack(agent: Player, max_distance: int = 10):
                 if any(x in opponent_shipyard_points for x in route.points()):
                     continue
 
-                if is_intercept_direct_attack_route(route, agent, direct_attack_fleet=t):
+                if is_intercept_direct_attack_route(
+                    route, agent, direct_attack_fleet=t
+                ):
                     continue
 
                 sy.action = Launch(num_ships_to_launch, route)

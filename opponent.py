@@ -4,15 +4,16 @@
 import kaggle_environments.envs.kore_fleets.helpers as kr
 import os
 import sys
+
 KAGGLE_AGENT_PATH = "/kaggle_simulations/agent/"
 if os.path.exists(KAGGLE_AGENT_PATH):
     # We're in the kaggle target system
-    sys.path.insert(0, os.path.join(KAGGLE_AGENT_PATH, 'lib'))
-    agent_path = os.path.join(KAGGLE_AGENT_PATH, 'opponent_agent')
+    sys.path.insert(0, os.path.join(KAGGLE_AGENT_PATH, "lib"))
+    agent_path = os.path.join(KAGGLE_AGENT_PATH, "opponent_agent")
 else:
     # We're somewhere else
-    sys.path.insert(0, os.path.join(os.getcwd(), 'lib'))
-    agent_path = 'opponent_agent'
+    sys.path.insert(0, os.path.join(os.getcwd(), "lib"))
+    agent_path = "opponent_agent"
 
 # Now for the actual agent
 from stable_baselines3 import PPO
@@ -20,6 +21,7 @@ from environment import KoreGymEnv
 
 model = PPO.load(agent_path)
 kore_env = KoreGymEnv()
+
 
 def agent(obs, config):
     kore_env.raw_obs = obs

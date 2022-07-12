@@ -45,7 +45,7 @@ def find_shortcut_routes(
     num_ships: int,
     safety: bool = True,
     allow_shipyard_intercept=False,
-    route_distance=None
+    route_distance=None,
 ) -> List[BoardRoute]:
     if route_distance is None:
         route_distance = start.distance_from(end)
